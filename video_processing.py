@@ -293,6 +293,10 @@ wpod_net = load_model(wpod_net_path)
 def pic_to_annotate(inp_image):
     # pic to another pic
     plate_image=""
+    gray=""
+    blur=""
+    binary=""
+
     pattern=re.compile(r"^[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,2}[ ]{0,1}[0-9]{3,4}$")
     lc_set=set()
     # image_path="/content/drive/MyDrive/YOLOv5_LCPlate/frames/"
@@ -318,21 +322,21 @@ def pic_to_annotate(inp_image):
         binary = cv2.threshold(blur, 180, 255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
         kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
-    plot_image = [plate_image, gray, blur, binary,thre_mor]
-    plot_name = ["plate_image","gray","blur","binary","dilation"]
-    for i in range(len(plot_image)):
-        bounds = ocr.ocr(plot_image[i], cls=True)
-        if len(bounds)>0:
-            text=bounds[0][1][0]
-            text=text.replace("-", "")
-            text=text.replace(" ", "")
-            text=text.upper()
-        if re.fullmatch(pattern, text) and text[0]!='X':
-                lc_set.add(text)
-                label=text
-    output_img=draw_box(inp_image,cor,label)
-    return output_img 
-
+        plot_image = [plate_image, gray, blur, binary,thre_mor]
+        plot_name = ["plate_image","gray","blur","binary","dilation"]
+        for i in range(len(plot_image)):
+            bounds = ocr.ocr(plot_image[i], cls=True)
+            if len(bounds)>0:
+                text=bounds[0][1][0]
+                text=text.replace("-", "")
+                text=text.replace(" ", "")
+                text=text.upper()
+            if re.fullmatch(pattern, text) and text[0]!='X':
+                    lc_set.add(text)
+                    label=text
+        output_img=draw_box(inp_image,cor,label)
+        return output_img 
+    return inp_image
 
 def video_to_set_process(video):
     # video is coming as input and a set is given as output.
