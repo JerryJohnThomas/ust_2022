@@ -292,6 +292,7 @@ wpod_net = load_model(wpod_net_path)
 
 def pic_to_annotate(inp_image):
     # pic to another pic
+    plate_image=""
     pattern=re.compile(r"^[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,2}[ ]{0,1}[0-9]{3,4}$")
     lc_set=set()
     # image_path="/content/drive/MyDrive/YOLOv5_LCPlate/frames/"
