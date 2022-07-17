@@ -291,7 +291,10 @@ def video_to_set_process(video):
     # video is coming as input and a set is given as output.
 
     # wpod loading
-    wpod_net_path = "./wpod-net.json"
+    # wpod_net_path = "./wpod-net.json"
+    # wpod_net_path = "wpod-net.json"
+    wpod_net_path = "/content/ust_2022/wpod-net.json"
+    
     wpod_net = load_model(wpod_net_path)
 
     # ocr and regex loading
