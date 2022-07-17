@@ -285,7 +285,53 @@ def draw_box(image_path, cor, label_inp='OpenCV',thickness=3 ):
     return vehicle_image
 
 
+wpod_net_path = "/content/ust_2022/wpod-net.json"
+wpod_net = load_model(wpod_net_path)
+
 ## main
+
+def pic_to_annotate(inp_image):
+    # pic to another pic
+    pattern=re.compile(r"^[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,2}[ ]{0,1}[0-9]{3,4}$")
+    lc_set=set()
+    # image_path="/content/drive/MyDrive/YOLOv5_LCPlate/frames/"
+
+    lc_val={}
+    ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
+    label=""
+    text=""
+
+
+    # test_image_path = path+filename
+    vehicle, LpImg,cor = get_plate(inp_image,wpod_net)
+
+
+    if (len(LpImg)): #check if there is at least one license image
+        # Scales, calculates absolute values, and converts the result to 8-bit.
+        plate_image = cv2.convertScaleAbs(LpImg[0], alpha=(255.0))
+        # convert to grayscale and blur the image
+        gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray,(7,7),0)
+        
+        # Applied inversed thresh_binary 
+        binary = cv2.threshold(blur, 180, 255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+        kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
+    plot_image = [plate_image, gray, blur, binary,thre_mor]
+    plot_name = ["plate_image","gray","blur","binary","dilation"]
+    for i in range(len(plot_image)):
+        bounds = ocr.ocr(plot_image[i], cls=True)
+        if len(bounds)>0:
+            text=bounds[0][1][0]
+            text=text.replace("-", "")
+            text=text.replace(" ", "")
+            text=text.upper()
+        if re.fullmatch(pattern, text) and text[0]!='X':
+                lc_set.add(text)
+                label=text
+    output_img=draw_box(inp_image,cor,label)
+    return output_img 
+
 
 def video_to_set_process(video):
     # video is coming as input and a set is given as output.
@@ -293,9 +339,9 @@ def video_to_set_process(video):
     # wpod loading
     # wpod_net_path = "./wpod-net.json"
     # wpod_net_path = "wpod-net.json"
-    wpod_net_path = "/content/ust_2022/wpod-net.json"
-    
-    wpod_net = load_model(wpod_net_path)
+
+    # wpod_net_path = "/content/ust_2022/wpod-net.json"
+    # wpod_net = load_model(wpod_net_path)
 
     # ocr and regex loading
     pattern=re.compile(r"^[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,2}[ ]{0,1}[0-9]{3,4}$")
