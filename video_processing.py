@@ -226,7 +226,7 @@ def preprocess_image(img,resize=False):
         img = cv2.resize(img, (224,224))
     return img
 
-def get_plate(image_path, Dmax=608, Dmin = 608,threshold=0.1):
+def get_plate(image_path,wpod_net, Dmax=608, Dmin = 608,threshold=0.1):
     vehicle = preprocess_image(image_path)
     ratio = float(max(vehicle.shape[:2])) / min(vehicle.shape[:2])
     side = int(ratio * Dmin)
@@ -321,7 +321,7 @@ def video_to_set_process(video):
         if (count%incr)==0:
             label=""
             text=""
-            vehicle, LpImg,cor = get_plate(image)
+            vehicle, LpImg,cor = get_plate(image,wpod_net)
             if (len(LpImg)): #check if there is at least one license image
                 # Scales, calculates absolute values, and converts the result to 8-bit.
                 plate_image = cv2.convertScaleAbs(LpImg[0], alpha=(255.0))
