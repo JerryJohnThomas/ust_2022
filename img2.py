@@ -40,11 +40,11 @@ def image_streamlit():
         col1.image(opencv_image, caption=f"Input Image")
 
         # reconvverting
-        opencv_image, out_label = cv2.cvtColor( opencv_image, cv2.COLOR_RGB2BGR)
+        opencv_image= cv2.cvtColor( opencv_image, cv2.COLOR_RGB2BGR)
 
 
         # instructions to Jasir, make output_img as the labelled image.
-        output_img=label_input_img(opencv_image) # add function here
+        output_img, out_label =label_input_img(opencv_image) # add function here
 
 
 
