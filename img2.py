@@ -4,7 +4,7 @@ import streamlit as st
 from PIL import Image
 from io import BytesIO
 import base64
-from video_processing import label_input_img
+from image_processing import label_input_img
 
 def get_image_download_link(img):
 	"""Generates a link allowing the PIL image to be downloaded

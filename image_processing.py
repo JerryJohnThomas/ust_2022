@@ -1,4 +1,3 @@
-## imports
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,18 +5,12 @@ from os.path import splitext,basename
 from keras.models import model_from_json
 import glob
 from matplotlib import gridspec
-
-
-
 import os
 import cv2
-# from google.colab.patches import cv2_imshow
-# from IPython.display import Image, display
 from paddleocr import PaddleOCR,draw_ocr
 import re
 
 
-## helper functions for wpod
 class Label:
     def __init__(self, cl=-1, tl=np.array([0., 0.]), br=np.array([0., 0.]), prob=None):
         self.__tl = tl
@@ -226,13 +219,14 @@ def preprocess_image(img,resize=False):
         img = cv2.resize(img, (224,224))
     return img
 
-def get_plate(image_path,wpod_net, Dmax=608, Dmin = 608,threshold=0.1):
+def get_plate(image_path, Dmax=608, Dmin = 608,threshold=0.1):
     vehicle = preprocess_image(image_path)
     ratio = float(max(vehicle.shape[:2])) / min(vehicle.shape[:2])
     side = int(ratio * Dmin)
     bound_dim = min(side, Dmax)
     _ , LpImg, _, cor = detect_lp(wpod_net, vehicle, bound_dim, lp_threshold=threshold)
     return vehicle, LpImg, cor
+
 
 
 def load_model(path):
@@ -247,70 +241,61 @@ def load_model(path):
     except Exception as e:
         print(e)
 
-
-def draw_box(image_path, cor, label_inp='OpenCV',thickness=3 ): 
-    pts=[]  
-    x_coordinates=cor[0][0]
-    y_coordinates=cor[0][1]
-    # store the top-left, top-right, bottom-left, bottom-right 
-    # of the plate license respectively
-    for i in range(4):
-        pts.append([int(x_coordinates[i]),int(y_coordinates[i])])
-    
-    pts = np.array(pts, np.int32)
-    pts = pts.reshape((-1,1,2))
-    vehicle_image = preprocess_image(image_path)
-
-    cv2.polylines(vehicle_image,[pts],True,(0,255,0),thickness)
-    
-
-    # font
-    font = cv2.FONT_HERSHEY_SIMPLEX
-
-    # org
-    org = (int(x_coordinates[0]),int(y_coordinates[0]))
-
-    # fontScale
-    fontScale = 2
-
-    # Blue color in BGR
-    color = (255, 255, 0)
-
-    # Line thickness of 2 px
-    thickness = 2
-
-    # Using cv2.putText() method
-    vehicle_image = cv2.putText(vehicle_image, label_inp, org, font, fontScale, color, thickness, cv2.LINE_AA)
-
-    return vehicle_image
-
-
 wpod_net_path = "/content/ust_2022/wpod-net.json"
 wpod_net = load_model(wpod_net_path)
 
-## main
 
-def pic_to_annotate(inp_image):
-    # pic to another pic
-    plate_image=""
-    gray=""
-    blur=""
-    binary=""
+def draw_box(image_path, cor, label_inp='OpenCV',thickness=3 ): 
+    pts=[]  
+    if(len(cor)):
+        x_coordinates=cor[0][0]
+        y_coordinates=cor[0][1]
+        # store the top-left, top-right, bottom-left, bottom-right 
+        # of the plate license respectively
+        for i in range(4):
+            pts.append([int(x_coordinates[i]),int(y_coordinates[i])])
+        
+        pts = np.array(pts, np.int32)
+        pts = pts.reshape((-1,1,2))
+        vehicle_image=image_path
+        # vehicle_image = cv2.cvtColor(image_path, cv2.COLOR_BGR2RGB)
+        # vehicle_image=vehicle_image/255
 
+        cv2.polylines(vehicle_image,[pts],True,(0,255,0),thickness)
+        
+
+        # font
+        font = cv2.FONT_HERSHEY_SIMPLEX
+
+        # org
+        org = (int(x_coordinates[0]),int(y_coordinates[0]))
+
+        # fontScale
+        fontScale = 2
+
+        # Blue color in BGR
+        color = (0, 255, 255)
+
+        # Line thickness of 2 px
+        thickness = 2
+
+        # Using cv2.putText() method
+        vehicle_image = cv2.putText(vehicle_image, label_inp, org, font, fontScale, color, thickness, cv2.LINE_AA)
+
+        return vehicle_image
+    return image_path
+    
+
+
+def label_input_img(input_img):
     pattern=re.compile(r"^[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,2}[ ]{0,1}[0-9]{3,4}$")
     lc_set=set()
-    # image_path="/content/drive/MyDrive/YOLOv5_LCPlate/frames/"
-
     lc_val={}
     ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
+    # video = cv2.VideoCapture("/content/drive/MyDrive/OCR/dr.mkv")
     label=""
     text=""
-
-
-    # test_image_path = path+filename
-    vehicle, LpImg,cor = get_plate(inp_image,wpod_net)
-
-
+    vehicle, LpImg,cor = get_plate(input_img)
     if (len(LpImg)): #check if there is at least one license image
         # Scales, calculates absolute values, and converts the result to 8-bit.
         plate_image = cv2.convertScaleAbs(LpImg[0], alpha=(255.0))
@@ -322,90 +307,20 @@ def pic_to_annotate(inp_image):
         binary = cv2.threshold(blur, 180, 255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
         kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
-        plot_image = [plate_image, gray, blur, binary,thre_mor]
-        plot_name = ["plate_image","gray","blur","binary","dilation"]
-        for i in range(len(plot_image)):
-            bounds = ocr.ocr(plot_image[i], cls=True)
-            if len(bounds)>0:
-                text=bounds[0][1][0]
-                text=text.replace("-", "")
-                text=text.replace(" ", "")
-                text=text.upper()
-            if re.fullmatch(pattern, text) and text[0]!='X':
-                    lc_set.add(text)
-                    label=text
-        output_img=draw_box(inp_image,cor,label)
-        return output_img 
-    return inp_image
-
-def video_to_set_process(video):
-    # video is coming as input and a set is given as output.
-
-    # wpod loading
-    # wpod_net_path = "./wpod-net.json"
-    # wpod_net_path = "wpod-net.json"
-
-    # wpod_net_path = "/content/ust_2022/wpod-net.json"
-    # wpod_net = load_model(wpod_net_path)
-
-    # ocr and regex loading
-    pattern=re.compile(r"^[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,2}[ ]{0,1}[0-9]{3,4}$")
-    lc_set=set()
-    lc_val={}
-    ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
-
-    # input video !! important
-    # video = cv2.VideoCapture("/content/drive/MyDrive/OCR/dr.mkv")
-
-    fps=int(video.get(cv2.CAP_PROP_FPS))
-    frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))-1
-    incr=int(fps/6)
-    count=-1
-
-    # processing
-    
-    while True:
-        success,image=video.read()
-        count+=1 
-        if not success:
-            break
-        if (count%incr)==0:
-            label=""
-            text=""
-            vehicle, LpImg,cor = get_plate(image,wpod_net)
-            if (len(LpImg)): #check if there is at least one license image
-                # Scales, calculates absolute values, and converts the result to 8-bit.
-                plate_image = cv2.convertScaleAbs(LpImg[0], alpha=(255.0))
-                # convert to grayscale and blur the image
-                gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
-                blur = cv2.GaussianBlur(gray,(7,7),0)
-                
-                # Applied inversed thresh_binary 
-                binary = cv2.threshold(blur, 180, 255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-                kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-                thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
-            plot_image = [plate_image, gray, blur, binary,thre_mor]
-            plot_name = ["plate_image","gray","blur","binary","dilation"]
-            for i in range(len(plot_image)):
-                bounds = ocr.ocr(plot_image[i], cls=True)
-                if len(bounds)>0:
-                    text=bounds[0][1][0]
-                    text=text.replace("-", "")
-                    text=text.replace(" ", "")
-                    text=text.upper()
-                if re.fullmatch(pattern, text) and text[0]!='X':
-                        lc_set.add(text)
-                        label=text
-
-
-    ans='\nregistration_nums'
-    for a in lc_set:
-        ans+=',\n'+a
-    ans+=', \n'
-
-    # return lc_set
-    return ans
-
-
-
-# image part
+    plot_image = [plate_image, gray, blur, binary,thre_mor]
+    plot_name = ["plate_image","gray","blur","binary","dilation"]
+    for i in range(len(plot_image)):
+        bounds = ocr.ocr(plot_image[i], cls=True)
+        if len(bounds)>0:
+            text=bounds[0][1][0]
+            text=text.replace("-", "")
+            text=text.replace(" ", "")
+            text=text.upper()
+        if re.fullmatch(pattern, text) and text[0]!='X':
+                lc_set.add(text)
+                label=text
+    if (len(label)):
+      output_image=draw_box(input_img,cor,label)
+      return output_image
+    return input_img
+        
