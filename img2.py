@@ -22,7 +22,7 @@ def get_image_download_link(img):
 
 def image_streamlit():
     # st.markdown("### Image ALPR")
-    uploaded_file = st.file_uploader("Choose a image file", type="jpg")
+    uploaded_file = st.file_uploader("Choose a image file", type=["jpg","png","jpeg"])
     col1, col2 = st.columns(2)
 
 
