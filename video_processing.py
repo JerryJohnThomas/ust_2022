@@ -226,7 +226,7 @@ def preprocess_image(img,resize=False):
         img = cv2.resize(img, (224,224))
     return img
 
-def get_plate(image_path,wpod_net, Dmax=608, Dmin = 608,threshold=0.1):
+def get_plate(image_path, Dmax=608, Dmin = 608,threshold=0.1):
     vehicle = preprocess_image(image_path)
     ratio = float(max(vehicle.shape[:2])) / min(vehicle.shape[:2])
     side = int(ratio * Dmin)
@@ -308,7 +308,7 @@ def pic_to_annotate(inp_image):
 
 
     # test_image_path = path+filename
-    vehicle, LpImg,cor = get_plate(inp_image,wpod_net)
+    vehicle, LpImg,cor = get_plate(inp_image)
 
 
     if (len(LpImg)): #check if there is at least one license image
