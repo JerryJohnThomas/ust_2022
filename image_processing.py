@@ -284,7 +284,7 @@ def draw_box(image_path, cor, label_inp='OpenCV',thickness=3 ):
 
         return vehicle_image
     return image_path
-    
+
 
 
 def label_input_img(input_img):
@@ -321,6 +321,6 @@ def label_input_img(input_img):
                 label=text
     if (len(label)):
       output_image=draw_box(input_img,cor,label)
-      return output_image
-    return input_img
+      return output_image,label
+    return input_img,"not found"
         

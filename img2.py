@@ -40,7 +40,7 @@ def image_streamlit():
         col1.image(opencv_image, caption=f"Input Image")
 
         # reconvverting
-        opencv_image = cv2.cvtColor( opencv_image, cv2.COLOR_RGB2BGR)
+        opencv_image, out_label = cv2.cvtColor( opencv_image, cv2.COLOR_RGB2BGR)
 
 
         # instructions to Jasir, make output_img as the labelled image.
@@ -50,6 +50,7 @@ def image_streamlit():
 
         col2.image(output_img, caption=f"Output")
         result = Image.fromarray(output_img)
+        st.markdown(out_label)
         st.markdown(get_image_download_link(result), unsafe_allow_html=True)
 
 
