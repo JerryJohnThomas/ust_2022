@@ -406,3 +406,44 @@ def video_to_set_process(video):
     # return lc_set
     return ans
 
+
+
+# image part
+
+def label_input_img(input_img):
+    pattern=re.compile(r"^[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,2}[ ]{0,1}[0-9]{3,4}$")
+    lc_set=set()
+    lc_val={}
+    ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
+    # video = cv2.VideoCapture("/content/drive/MyDrive/OCR/dr.mkv")
+    label=""
+    text=""
+    vehicle, LpImg,cor = get_plate(input_img)
+    if (len(LpImg)): #check if there is at least one license image
+        # Scales, calculates absolute values, and converts the result to 8-bit.
+        plate_image = cv2.convertScaleAbs(LpImg[0], alpha=(255.0))
+        # convert to grayscale and blur the image
+        gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray,(7,7),0)
+        
+        # Applied inversed thresh_binary 
+        binary = cv2.threshold(blur, 180, 255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+        kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
+    plot_image = [plate_image, gray, blur, binary,thre_mor]
+    plot_name = ["plate_image","gray","blur","binary","dilation"]
+    for i in range(len(plot_image)):
+        bounds = ocr.ocr(plot_image[i], cls=True)
+        if len(bounds)>0:
+            text=bounds[0][1][0]
+            text=text.replace("-", "")
+            text=text.replace(" ", "")
+            text=text.upper()
+        if re.fullmatch(pattern, text) and text[0]!='X':
+                lc_set.add(text)
+                label=text
+    if (len(label)):
+      output_image=draw_box(input_img,cor,label)
+      return output_image
+    return input_img
+        

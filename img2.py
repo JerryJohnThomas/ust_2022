@@ -4,6 +4,7 @@ import streamlit as st
 from PIL import Image
 from io import BytesIO
 import base64
+from video_processing import label_input_img
 
 def get_image_download_link(img):
 	"""Generates a link allowing the PIL image to be downloaded
@@ -33,12 +34,17 @@ def image_streamlit():
         opencv_image = cv2.cvtColor( opencv_image, cv2.COLOR_BGR2RGB)
         
 
+
+
         # Now do something with the image! For example, let's display it:
         col1.image(opencv_image, caption=f"Input Image")
 
+        # reconvverting
+        opencv_image = cv2.cvtColor( opencv_image, cv2.COLOR_RGB2BGR)
+
 
         # instructions to Jasir, make output_img as the labelled image.
-        output_img=opencv_image # add function here
+        output_img=label_input_img(opencv_image) # add function here
 
 
 
