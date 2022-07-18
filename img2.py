@@ -47,6 +47,7 @@ def image_streamlit():
         output_img, out_label =label_input_img(opencv_image) # add function here
 
 
+        output_img = cv2.cvtColor( output_img, cv2.COLOR_BGR2RGB)
 
         col2.image(output_img, caption=f"Output")
         result = Image.fromarray(output_img)
