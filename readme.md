@@ -17,3 +17,4 @@ Video Link: https://www.youtube.com/watch?v=TTiqp-zLRO4&ab_channel=JasirK
 
 Video Link : https://www.youtube.com/watch?v=7RoVFyheRrs&ab_channel=JasirK 
 
+Presentation Slides: https://docs.google.com/presentation/d/1PJXL0SCGNmz50r_5yfDoplhXj1xsA3XSopXBZs1qxGg/edit#slide=id.g13d6faab502_1_8
